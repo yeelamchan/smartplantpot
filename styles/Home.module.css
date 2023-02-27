@@ -39,6 +39,10 @@
   font-family: var(--font-mono);
 }
 
+.chart {
+  max-width: 80vw;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(25%, auto));
@@ -184,6 +188,7 @@
     margin-bottom: 120px;
     max-width: 320px;
     text-align: center;
+    
   }
 
   .card {

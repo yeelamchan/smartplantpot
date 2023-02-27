@@ -14,6 +14,7 @@ import {
   onValue,
   limitToLast,
 } from "firebase/database";
+import QuickChart from "quickchart-js";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -31,23 +32,65 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+const myChart = new QuickChart();
+
 export default function Home() {
   const [hum, setHum] = useState(0);
   const [temp, setTemp] = useState(0);
-  const [time, setTime] = useState("N/A")
-  
-  useEffect(() => {
-    const dataRef = query(ref(db, "ESP32_APP/"), limitToLast(1));
-    onValue(dataRef, (snapshot) => {
-      const data = snapshot.val();
+  const [time, setTime] = useState("N/A");
+  const [recordNo, setRecordNo] = useState(24);
 
-      for(var value in data){
-        setHum(data[value].humidity);
-        setTemp(data[value].temperature);
-        setTime(data[value].timestamp);
+  const humList = [];
+  const tempList = [];
+  const timeList = [];
+
+  useEffect(() => {
+    const lastRecordRef = query(ref(db, "ESP32_APP/"), limitToLast(1));
+    onValue(lastRecordRef, (snapshot) => {
+      const lastRecord = snapshot.val();
+
+      for (var value in lastRecord) {
+        setHum(lastRecord[value].humidity);
+        setTemp(lastRecord[value].temperature);
+        setTime(lastRecord[value].timestamp);
       }
     });
   }, []);
+
+  const dataRef = query(ref(db, "ESP32_APP/"), limitToLast(recordNo));
+  onValue(dataRef, (snapshot) => {
+    const data = snapshot.val();
+
+    for (var value in data) {
+      humList.push(data[value].humidity);
+      tempList.push(data[value].temperature);
+      timeList.push(data[value].timestamp);
+    }
+  })
+
+  myChart.setConfig({
+    type: "line",
+    data: {
+      labels: timeList,
+      datasets: [
+        {
+          label: "Humidity",
+          data: humList,
+          fill: false
+        }, {
+          label: "Temperature",
+          data: tempList,
+          fill: false
+        }
+      ],
+    },
+    options: {
+      title: {
+        display: true,
+        text: `Last ${recordNo} Records`
+      }
+    }
+  });
 
   return (
     <>
@@ -60,53 +103,27 @@ export default function Home() {
       <main className={styles.main}>
         <div className={styles.description}>
           <p>Final Year Project</p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            ></a>
-          </div>
+        </div>
+
+        <div>
+          <img className={styles.chart} src={myChart.getUrl()} />
         </div>
 
         <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+          <div className={styles.card}>
             <h2 className={inter.className}>Humidity</h2>
             <p className={inter.className}>{hum}</p>
-          </a>
+          </div>
+            
+          <div className={styles.card}>
+            <h2 className={inter.className}>Temperature</h2>
+            <p className={inter.className}>{temp}</p>
+          </div>
 
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Temperature
-            </h2>
-            <p className={inter.className}>
-              {temp}
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Timestamp
-            </h2>
-            <p className={inter.className}>
-              {time}
-            </p>
-          </a>
+          <div className={styles.card}>
+            <h2 className={inter.className}>Time of Last Record</h2>
+            <p className={inter.className}>{time}</p>
+          </div>
         </div>
       </main>
     </>
