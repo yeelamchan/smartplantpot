@@ -2,6 +2,10 @@ import Head from "next/head";
 import { Inter } from "@next/font/google";
 import styles from "@/styles/Home.module.css";
 import { useEffect, useState } from "react";
+import React from "react";
+import * as Slider from "@radix-ui/react-slider";
+import {Line} from 'react-chartjs-2';
+import 'chart.js/auto';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,7 +18,7 @@ import {
   onValue,
   limitToLast,
 } from "firebase/database";
-import QuickChart from "quickchart-js";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -32,14 +36,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-const myChart = new QuickChart();
-
 export default function Home() {
   const [hum, setHum] = useState(0);
   const [temp, setTemp] = useState(0);
   const [time, setTime] = useState("N/A");
   const [recordNo, setRecordNo] = useState(24);
-
   const humList = [];
   const tempList = [];
   const timeList = [];
@@ -52,45 +53,39 @@ export default function Home() {
       for (var value in lastRecord) {
         setHum(lastRecord[value].humidity);
         setTemp(lastRecord[value].temperature);
-        setTime(lastRecord[value].timestamp);
+        setTime(new Date(Number(lastRecord[value].timestamp * 1000)).toLocaleString("en-GB", {dateStyle:'medium', timeStyle:'medium'}));
       }
     });
   }, []);
 
-  const dataRef = query(ref(db, "ESP32_APP/"), limitToLast(recordNo));
+  const dataRef = query(ref(db, "ESP32_APP/"), limitToLast(24));
   onValue(dataRef, (snapshot) => {
     const data = snapshot.val();
 
     for (var value in data) {
       humList.push(data[value].humidity);
       tempList.push(data[value].temperature);
-      timeList.push(data[value].timestamp);
-    }
-  })
-
-  myChart.setConfig({
-    type: "line",
-    data: {
-      labels: timeList,
-      datasets: [
-        {
-          label: "Humidity",
-          data: humList,
-          fill: false
-        }, {
-          label: "Temperature",
-          data: tempList,
-          fill: false
-        }
-      ],
-    },
-    options: {
-      title: {
-        display: true,
-        text: `Last ${recordNo} Records`
-      }
+      timeList.push(new Date(Number(data[value].timestamp * 1000)).toLocaleString("en-GB", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}));
     }
   });
+
+
+  const timeData = timeList.slice(timeList.length - recordNo)
+  const humData = humList.slice(humList.length - recordNo)
+  const tempData = tempList.slice(tempList.length - recordNo)
+
+  const chartData = {
+    labels: timeData,
+    datasets: [
+      {
+        label: "Humidity",
+        data: humData,
+      }, {
+        label: "Temperature",
+        data: tempData,
+      }
+    ],
+  };
 
   return (
     <>
@@ -102,19 +97,39 @@ export default function Home() {
       </Head>
       <main className={styles.main}>
         <div className={styles.description}>
-          <p>Final Year Project</p>
+          <p>Smart Plant Pot</p>
         </div>
 
-        <div>
-          <img className={styles.chart} src={myChart.getUrl()} />
+        <div className={styles.chart}>
+          <h2>Showing most recent {recordNo} records</h2>
+          <Line data={chartData} />
         </div>
+
+        <form>
+          <Slider.Root
+            className={styles.SliderRoot}
+            defaultValue={[recordNo]}
+            min={2}
+            max={24}
+            step={1}
+            aria-label="Records"
+            onValueChange={(e) => setRecordNo(e[0])}
+          >
+            <Slider.Track className={styles.SliderTrack}>
+              <Slider.Range className={styles.SliderRange} />
+            </Slider.Track>
+            <Slider.Thumb className={styles.SliderThumb} />
+          </Slider.Root>
+
+          <label>Showing records: {recordNo}</label>
+        </form>
 
         <div className={styles.grid}>
           <div className={styles.card}>
             <h2 className={inter.className}>Humidity</h2>
             <p className={inter.className}>{hum}</p>
           </div>
-            
+
           <div className={styles.card}>
             <h2 className={inter.className}>Temperature</h2>
             <p className={inter.className}>{temp}</p>
