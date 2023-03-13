@@ -18,6 +18,7 @@ import {
   onValue,
   limitToLast,
 } from "firebase/database";
+import { scales } from "chart.js/auto";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -40,10 +41,14 @@ export default function Home() {
   const [hum, setHum] = useState(0);
   const [temp, setTemp] = useState(0);
   const [time, setTime] = useState("N/A");
+  const [water, setWater] = useState(0);
+  const [moisture, setMoisture] = useState(0);
   const [recordNo, setRecordNo] = useState(24);
   const humList = [];
   const tempList = [];
   const timeList = [];
+  const waterList = [];
+  const moistureList = [];
 
   useEffect(() => {
     const lastRecordRef = query(ref(db, "ESP32_APP/"), limitToLast(1));
@@ -54,6 +59,8 @@ export default function Home() {
         setHum(lastRecord[value].humidity);
         setTemp(lastRecord[value].temperature);
         setTime(new Date(Number(lastRecord[value].timestamp * 1000)).toLocaleString("en-GB", {dateStyle:'medium', timeStyle:'medium'}));
+        setWater(lastRecord[value].water);
+        setMoisture(lastRecord[value].moisture);
       }
     });
   }, []);
@@ -66,26 +73,70 @@ export default function Home() {
       humList.push(data[value].humidity);
       tempList.push(data[value].temperature);
       timeList.push(new Date(Number(data[value].timestamp * 1000)).toLocaleString("en-GB", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}));
+      waterList.push(data[value].water);
+      moistureList.push(data[value].moisture);
     }
   });
-
 
   const timeData = timeList.slice(timeList.length - recordNo)
   const humData = humList.slice(humList.length - recordNo)
   const tempData = tempList.slice(tempList.length - recordNo)
+  const waterData = waterList.slice(waterList.length - recordNo)
+  const moistureData = moistureList.slice(moistureList.length - recordNo)
 
-  const chartData = {
+  const humChart = {
     labels: timeData,
     datasets: [
       {
         label: "Humidity",
         data: humData,
-      }, {
-        label: "Temperature",
-        data: tempData,
+        borderColor: '#3ac9a4',
+        backgroundColor: '#a8e3d4'
       }
     ],
   };
+
+  const tempChart = {
+    labels: timeData,
+    datasets: [
+      {
+        label: "Temperature",
+        data: tempData,
+        borderColor: '#FF6384',
+        backgroundColor: '#FFB1C1',
+      }
+    ],
+  }
+
+  const waterChart = {
+    labels: timeData,
+    datasets: [
+      {
+        label: "Water Level",
+        data: waterData,
+      }
+    ],
+  }
+
+  const moistureChart = {
+    labels: timeData,
+    datasets: [
+      {
+        label: "Soil Moisture",
+        data: moistureData,
+        borderColor: '#fad73c',
+        backgroundColor: '#f7eaad'
+      }
+    ],
+  }
+
+  const chartOptions = {
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+  }
 
   return (
     <>
@@ -100,9 +151,26 @@ export default function Home() {
           <p>Smart Plant Pot</p>
         </div>
 
-        <div className={styles.chart}>
-          <h2>Showing most recent {recordNo} records</h2>
-          <Line data={chartData} />
+        <div className={styles.chartGrid}>
+          <div className={styles.chart}>
+            <h2>Humidity (%)</h2>
+            <Line data={humChart} options={chartOptions} />
+          </div>
+
+          <div className={styles.chart}>
+            <h2>Temperature (°C)</h2>
+            <Line data={tempChart} options={chartOptions} />
+          </div>
+
+          <div className={styles.chart}>
+            <h2>Water Level</h2>
+            <Line data={waterChart} options={chartOptions} />
+          </div>
+
+          <div className={styles.chart}>
+            <h2>Soil Moisture</h2>
+            <Line data={moistureChart} options={chartOptions} />
+          </div>
         </div>
 
         <form>
@@ -121,10 +189,15 @@ export default function Home() {
             <Slider.Thumb className={styles.SliderThumb} />
           </Slider.Root>
 
-          <label>Showing records: {recordNo}</label>
+          <label className={inter.className}>Showing last {recordNo} records</label>
         </form>
 
         <div className={styles.grid}>
+        <div className={styles.card}>
+            <h2 className={inter.className}>Time of Last Record</h2>
+            <p className={inter.className}>{time}</p>
+          </div>
+
           <div className={styles.card}>
             <h2 className={inter.className}>Humidity</h2>
             <p className={inter.className}>{hum}</p>
@@ -136,8 +209,13 @@ export default function Home() {
           </div>
 
           <div className={styles.card}>
-            <h2 className={inter.className}>Time of Last Record</h2>
-            <p className={inter.className}>{time}</p>
+            <h2 className={inter.className}>Water Level</h2>
+            <p className={inter.className}>{water}</p>
+          </div>
+
+          <div className={styles.card}>
+            <h2 className={inter.className}>Soil Moisture</h2>
+            <p className={inter.className}>{moisture}</p>
           </div>
         </div>
       </main>
