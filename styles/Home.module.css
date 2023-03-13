@@ -18,13 +18,6 @@
   font-family: var(--font-mono);
 }
 
-.description a {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .description p {
   position: relative;
   margin: 0;
@@ -39,11 +32,19 @@
   font-family: var(--font-mono);
 }
 
+.chartGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(25%, auto));
+  grid-gap: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+}
+
 .chart {
-  width: 80vw;
+  width: 35vw;
   background-color: white;
   padding: 1em;
-  margin-bottom: 1em;
+  border-radius: 10px;
 }
 
 .chart h2 {
@@ -66,7 +67,8 @@
   position: relative;
   flex-grow: 1;
   border-radius: 9999px;
-  height: 3px;
+  height: 5px;
+  border: 1px darkgray solid;
 }
 
 .SliderRange {
@@ -83,6 +85,7 @@
   background-color: white;
   box-shadow: 0 2px 10px black;
   border-radius: 10px;
+  border: 1px darkgray solid;
 }
 .SliderThumb:hover {
   background-color: purple;
@@ -97,6 +100,7 @@
   grid-template-columns: repeat(4, minmax(25%, auto));
   width: var(--max-width);
   max-width: 100%;
+  margin-top: 1em;
 }
 
 .card {
@@ -125,84 +129,6 @@
   max-width: 30ch;
 }
 
-.center {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  padding: 4rem 0;
-}
-
-.center::before {
-  background: var(--secondary-glow);
-  border-radius: 50%;
-  width: 480px;
-  height: 360px;
-  margin-left: -400px;
-}
-
-.center::after {
-  background: var(--primary-glow);
-  width: 240px;
-  height: 180px;
-  z-index: -1;
-}
-
-.center::before,
-.center::after {
-  content: '';
-  left: 50%;
-  position: absolute;
-  filter: blur(45px);
-  transform: translateZ(0);
-}
-
-.logo,
-.thirteen {
-  position: relative;
-}
-
-.thirteen {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 75px;
-  height: 75px;
-  padding: 25px 10px;
-  margin-left: 16px;
-  transform: translateZ(0);
-  border-radius: var(--border-radius);
-  overflow: hidden;
-  box-shadow: 0px 2px 8px -1px #0000001a;
-}
-
-.thirteen::before,
-.thirteen::after {
-  content: '';
-  position: absolute;
-  z-index: -1;
-}
-
-/* Conic Gradient Animation */
-.thirteen::before {
-  animation: 6s rotate linear infinite;
-  width: 200%;
-  height: 200%;
-  background: var(--tile-border);
-}
-
-/* Inner Square */
-.thirteen::after {
-  inset: 0;
-  padding: 1px;
-  border-radius: var(--border-radius);
-  background: linear-gradient(
-    to bottom right,
-    rgba(var(--tile-start-rgb), 1),
-    rgba(var(--tile-end-rgb), 1)
-  );
-  background-clip: content-box;
-}
 
 /* Enable hover only on non-touch devices */
 @media (hover: hover) and (pointer: fine) {
@@ -232,12 +158,19 @@
     padding: 4rem;
   }
 
+  .chartGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart {
+    width: 90vw;
+  }
+
   .grid {
     grid-template-columns: 1fr;
     margin-bottom: 120px;
     max-width: 320px;
     text-align: center;
-    
   }
 
   .card {
@@ -304,8 +237,26 @@
   }
 }
 
+@media (min-width: 951px) and (max-width: 1350px) {
+  .chart {
+    width: 45vw;
+  }
+
+  .grid {
+    grid-template-columns: repeat(3, 33%);
+  }
+}
+
 /* Tablet and Smaller Desktop */
-@media (min-width: 701px) and (max-width: 1120px) {
+@media (min-width: 701px) and (max-width: 950px) {
+  .chart {
+    width: 80vw;
+  }
+
+  .chartGrid {
+    grid-template-columns: repeat(1, 50%);
+  }
+  
   .grid {
     grid-template-columns: repeat(2, 50%);
   }
