@@ -4,8 +4,9 @@ import styles from "@/styles/Home.module.css";
 import { useEffect, useState } from "react";
 import React from "react";
 import * as Slider from "@radix-ui/react-slider";
-import {Line} from 'react-chartjs-2';
-import 'chart.js/auto';
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
+import { Line } from "react-chartjs-2";
+import "chart.js/auto";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -49,6 +50,7 @@ export default function Home() {
   const timeList = [];
   const waterList = [];
   const moistureList = [];
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const lastRecordRef = query(ref(db, "ESP32_APP/"), limitToLast(1));
@@ -58,9 +60,20 @@ export default function Home() {
       for (var value in lastRecord) {
         setHum(lastRecord[value].humidity);
         setTemp(lastRecord[value].temperature);
-        setTime(new Date(Number(lastRecord[value].timestamp * 1000)).toLocaleString("en-GB", {dateStyle:'medium', timeStyle:'medium'}));
+        setTime(
+          new Date(Number(lastRecord[value].timestamp * 1000)).toLocaleString(
+            "en-GB",
+            { dateStyle: "medium", timeStyle: "medium" }
+          )
+        );
         setWater(lastRecord[value].water);
         setMoisture(lastRecord[value].moisture);
+      }
+
+      if (lastRecord[value].water <= 1100) {
+        setOpen(true)
+      } else {
+        setOpen(false)
       }
     });
   }, []);
@@ -72,17 +85,24 @@ export default function Home() {
     for (var value in data) {
       humList.push(data[value].humidity);
       tempList.push(data[value].temperature);
-      timeList.push(new Date(Number(data[value].timestamp * 1000)).toLocaleString("en-GB", {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}));
+      timeList.push(
+        new Date(Number(data[value].timestamp * 1000)).toLocaleString("en-GB", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      );
       waterList.push(data[value].water);
       moistureList.push(data[value].moisture);
     }
   });
 
-  const timeData = timeList.slice(timeList.length - recordNo)
-  const humData = humList.slice(humList.length - recordNo)
-  const tempData = tempList.slice(tempList.length - recordNo)
-  const waterData = waterList.slice(waterList.length - recordNo)
-  const moistureData = moistureList.slice(moistureList.length - recordNo)
+  const timeData = timeList.slice(timeList.length - recordNo);
+  const humData = humList.slice(humList.length - recordNo);
+  const tempData = tempList.slice(tempList.length - recordNo);
+  const waterData = waterList.slice(waterList.length - recordNo);
+  const moistureData = moistureList.slice(moistureList.length - recordNo);
 
   const humChart = {
     labels: timeData,
@@ -90,9 +110,9 @@ export default function Home() {
       {
         label: "Humidity",
         data: humData,
-        borderColor: '#3ac9a4',
-        backgroundColor: '#a8e3d4'
-      }
+        borderColor: "#3ac9a4",
+        backgroundColor: "#a8e3d4",
+      },
     ],
   };
 
@@ -102,11 +122,11 @@ export default function Home() {
       {
         label: "Temperature",
         data: tempData,
-        borderColor: '#FF6384',
-        backgroundColor: '#FFB1C1',
-      }
+        borderColor: "#FF6384",
+        backgroundColor: "#FFB1C1",
+      },
     ],
-  }
+  };
 
   const waterChart = {
     labels: timeData,
@@ -114,9 +134,9 @@ export default function Home() {
       {
         label: "Water Level",
         data: waterData,
-      }
+      },
     ],
-  }
+  };
 
   const moistureChart = {
     labels: timeData,
@@ -124,19 +144,19 @@ export default function Home() {
       {
         label: "Soil Moisture",
         data: moistureData,
-        borderColor: '#fad73c',
-        backgroundColor: '#f7eaad'
-      }
+        borderColor: "#fad73c",
+        backgroundColor: "#f7eaad",
+      },
     ],
-  }
+  };
 
   const chartOptions = {
-      plugins: {
-        legend: {
-          display: false
-        }
-      }
-  }
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
+  };
 
   return (
     <>
@@ -173,6 +193,31 @@ export default function Home() {
           </div>
         </div>
 
+        <AlertDialog.Root open={open} onOpenChange={setOpen}>
+          <AlertDialog.Portal>
+            <AlertDialog.Overlay className={styles.AlertDialogOverlay} />
+            <AlertDialog.Content className={styles.AlertDialogContent}>
+              <AlertDialog.Title className={styles.AlertDialogTitle}>
+                Water Level Alert
+              </AlertDialog.Title>
+              <AlertDialog.Description
+                className={styles.AlertDialogDescription}
+              >
+                Water level is at {water}. Please add more water to the tank.
+              </AlertDialog.Description>
+              <AlertDialog.Action asChild>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                  }}
+                >
+                  Understood
+                </button>
+              </AlertDialog.Action>
+            </AlertDialog.Content>
+          </AlertDialog.Portal>
+        </AlertDialog.Root>
+
         <form>
           <Slider.Root
             className={styles.SliderRoot}
@@ -189,11 +234,13 @@ export default function Home() {
             <Slider.Thumb className={styles.SliderThumb} />
           </Slider.Root>
 
-          <label className={inter.className}>Showing last {recordNo} records</label>
+          <label className={inter.className}>
+            Showing last {recordNo} records
+          </label>
         </form>
 
         <div className={styles.grid}>
-        <div className={styles.card}>
+          <div className={styles.card}>
             <h2 className={inter.className}>Time of Last Record</h2>
             <p className={inter.className}>{time}</p>
           </div>
